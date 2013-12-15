@@ -1,4 +1,4 @@
-var game = new Phaser.Game(320,480, Phaser.CANVAS, 'trmbs-game', {preload: preload, create: create, update: update, render: render });
+var game = new Phaser.Game(320,480, Phaser.AUTO, 'trmbs-game', {preload: preload, create: create, update: update, render: render });
 
 function preload() {
     // what a mess, need an atlas
