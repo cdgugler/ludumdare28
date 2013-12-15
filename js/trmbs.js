@@ -14,6 +14,7 @@ function preload() {
     game.load.image('bear2', 'assets/img/bear2.png');
     game.load.image('banana', 'assets/img/banana.png');
     game.load.image('honey', 'assets/img/honey.png');
+    game.load.image('exit', 'assets/img/exit.png');
     game.load.tilemap('level01', 'assets/maps/level01.json', null, Phaser.Tilemap.TILED_JSON);
     game.load.tileset('tiles', 'assets/img/tiles01.png', 16, 16);
 }
@@ -26,7 +27,8 @@ var player,
     tileset,
     layer,
     tempvel,
-    holdables;
+    holdables,
+    discardedHoldables;
 
 var LIFT_METER_HEIGHT = 75,
     PLAYER_MAX_VELOCITY = 2200;
@@ -102,29 +104,33 @@ function grabHoldable(player, holdable) {
     // if player is already holding something
     // and collision holdable is not attached
     if (player.holding && !holdable.attached) {
-        // // launch it outta here
-        // var valX = Math.floor(Math.random() * 3000 + 600);
-        // // go left on odd velocity
-        // valX = (valX % 2) == 0 ? valX : -valX;
-        // player.holding.body.velocity.x = valX;
-        // player.holding.body.velocity.y = -1500;
-        // player.holding = false;
-
-        // recycle the emitter for now
-        // set the emitter to the location of the player before we blow em up
-        player.holding.kill();
-        deadPlayerEmitter.x = player.body.x;
-        deadPlayerEmitter.y = player.body.y;
-        deadPlayerEmitter.start(true, 5000, null, 50);
+        // launch it outta here
+        var valX = Math.floor(Math.random() * 800 + 500);
+        // go left on odd velocity
+        valX = (valX % 2) == 0 ? valX : -valX;
+        player.holding.body.velocity.x = valX;
+        player.holding.body.velocity.y = -1500;
+        holdables.remove(player.holding);
+        discardedHoldables.add(player.holding);
+        player.holding = false;
     }
     holdable.attached = true;
     player.holding = holdable;
 }
 
+// blows up discarded holdables once they're on
+// the way back down
 function checkVelocity(sprite) {
-    if (sprite.body.velocity > PLAYER_MAX_VELOCITY) {
+    if (sprite.body.velocity.y > 0) {
+        deadPlayerEmitter.x = sprite.body.x;
+        deadPlayerEmitter.y = sprite.body.y;
+        deadPlayerEmitter.start(true, 3000, null, 10);
         sprite.kill();
     }
+}
+
+function endGame() {
+    console.log("THE END");
 }
 
 function create() {
@@ -176,6 +182,12 @@ function create() {
     setUpSprite(bear2);
     addToGroup(bananas);
     addToGroup(honey);
+
+    // when player contacts another item
+    // old item inserted in here
+    discardedHoldables = game.add.group();
+
+    exit = game.add.sprite(290, 0, 'exit');
 }
 
 function update() {
@@ -186,7 +198,8 @@ function update() {
     game.physics.collide(player, spike, playerCollidesWithSpike, null, this);
     game.physics.collide(player, holdables, grabHoldable);
     game.physics.collide(player, layer, playerCollidesWithLayer);
-    game.physics.collide(spike, layer);
+    game.physics.collide(player, exit, endGame);
+    // game.physics.collide(spike, layer);
     game.physics.collide(holdables, layer, collidesWithLayer, null, this);
     game.physics.collide(deadPlayerEmitter, layer);
     liftMeter.body.x = game.camera.x + 5;
@@ -217,7 +230,7 @@ function update() {
         player.holding.body.x = player.body.x + 5;
         player.holding.body.y = player.body.y;
     }
-    holdables.forEach(checkVelocity, this, true);
+    discardedHoldables.forEach(checkVelocity, this, true);
 
     // debug, find velocity for various height falls
     // if (player.body.velocity.y > tempvel) {
