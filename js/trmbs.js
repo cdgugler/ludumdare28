@@ -63,12 +63,18 @@ function playerCollidesWithSpike() {
     spike.body.velocity.x = 0;
     spike.body.velocity.y = 0;
     // start the emitter, (all at once?, how long each particle lasts, how often to emit, num particles)
-    deadPlayerEmitter.start(true, 12000, null, 50);
+    deadPlayerEmitter.start(true, 5000, null, 15);
 }
 
 function playerCollidesWithLayer() {
    if (player.squished) {
        playerCollidesWithSpike();
+   }
+}
+
+function collidesWithLayer() {
+   if (this.squished) {
+       this.kill();
    }
 }
 
@@ -88,11 +94,41 @@ function addToGroup(sprites) {
         sprite = holdables.create(sprites.loc[i][0], sprites.loc[i][1], sprites.name);
         sprite.body.setSize(sprites.bodySize[0], sprites.bodySize[1], sprites.bodySize[2], sprites.bodySize[3]);
         setUpSprite(sprite, 90);
+        sprite.attached = false; // if player is holding 
+    }
+}
+
+function grabHoldable(player, holdable) {
+    // if player is already holding something
+    // and collision holdable is not attached
+    if (player.holding && !holdable.attached) {
+        // // launch it outta here
+        // var valX = Math.floor(Math.random() * 3000 + 600);
+        // // go left on odd velocity
+        // valX = (valX % 2) == 0 ? valX : -valX;
+        // player.holding.body.velocity.x = valX;
+        // player.holding.body.velocity.y = -1500;
+        // player.holding = false;
+
+        // recycle the emitter for now
+        // set the emitter to the location of the player before we blow em up
+        player.holding.kill();
+        deadPlayerEmitter.x = player.body.x;
+        deadPlayerEmitter.y = player.body.y;
+        deadPlayerEmitter.start(true, 5000, null, 50);
+    }
+    holdable.attached = true;
+    player.holding = holdable;
+}
+
+function checkVelocity(sprite) {
+    if (sprite.body.velocity > PLAYER_MAX_VELOCITY) {
+        sprite.kill();
     }
 }
 
 function create() {
-    game.stage.backgroundColor = '#000';
+    game.stage.backgroundColor = '#000000';
     // tilemap contains the actual map of the level, ie the TILED json file
     map = game.add.tilemap('level01');
     // tileset, contains the image of tiles and collision data for each tile
@@ -144,10 +180,14 @@ function create() {
 
 function update() {
     // check for collisions
+    // collide params
+    // object1 object2 collideCallback processCallback context
+    // if using processCallback it must return true for collideCallback to run
     game.physics.collide(player, spike, playerCollidesWithSpike, null, this);
+    game.physics.collide(player, holdables, grabHoldable);
     game.physics.collide(player, layer, playerCollidesWithLayer);
     game.physics.collide(spike, layer);
-    game.physics.collide(holdables, layer);
+    game.physics.collide(holdables, layer, collidesWithLayer, null, this);
     game.physics.collide(deadPlayerEmitter, layer);
     liftMeter.body.x = game.camera.x + 5;
     liftMeter.body.y = game.camera.y + 5;
@@ -173,6 +213,11 @@ function update() {
     if (player.body.velocity.y > PLAYER_MAX_VELOCITY) {
         player.squished = true;
     }
+    if (player.holding) {
+        player.holding.body.x = player.body.x + 5;
+        player.holding.body.y = player.body.y;
+    }
+    holdables.forEach(checkVelocity, this, true);
 
     // debug, find velocity for various height falls
     // if (player.body.velocity.y > tempvel) {
