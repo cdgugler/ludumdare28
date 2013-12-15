@@ -20,6 +20,7 @@ function preload() {
 }
 
 var player,
+    score = 0,
     spike,
     liftTimer = 0,
     lifting,
@@ -28,7 +29,8 @@ var player,
     layer,
     tempvel,
     holdables,
-    discardedHoldables;
+    discardedHoldables,
+    mainText;
 
 var LIFT_METER_HEIGHT = 75,
     PLAYER_MAX_VELOCITY = 2200;
@@ -43,7 +45,8 @@ var bananas = {
         [110, 890],
         [28, 618],
         [220, 550]],
-        name: 'banana'
+    name: 'banana',
+    points: 3
 };
 var honey = {
     bodySize: [16, 22, 1, 1],
@@ -54,7 +57,8 @@ var honey = {
         [60, 390],
         [48, 150],
         [260, 22]],
-        name: 'honey'
+    name: 'honey',
+    points: 5
 };
 
 function playerCollidesWithSpike() {
@@ -97,6 +101,7 @@ function addToGroup(sprites) {
         sprite.body.setSize(sprites.bodySize[0], sprites.bodySize[1], sprites.bodySize[2], sprites.bodySize[3]);
         setUpSprite(sprite, 90);
         sprite.attached = false; // if player is holding 
+        sprite.points = sprites.points;
     }
 }
 
@@ -105,7 +110,7 @@ function grabHoldable(player, holdable) {
     // and collision holdable is not attached
     if (player.holding && !holdable.attached) {
         // launch it outta here
-        var valX = Math.floor(Math.random() * 800 + 500);
+        var valX = Math.floor(Math.random() * 600 + 300);
         // go left on odd velocity
         valX = (valX % 2) == 0 ? valX : -valX;
         player.holding.body.velocity.x = valX;
@@ -129,8 +134,30 @@ function checkVelocity(sprite) {
     }
 }
 
+// calc score and time, display
 function endGame() {
-    console.log("THE END");
+    var endTime = Math.round((game.time.now / 1000) * 100) / 100;
+    holdables.forEach(calcScore, this, true);
+    // add time bonus
+    var bonus = 10;
+    if (endTime > 10 && endTime <= 20) {
+        bonus -= 3;
+    } else if (endTime > 20 && endTime <= 30) {
+        bonus -= 5;
+    } else if (endTime > 30 && endTime <= 40) {
+        bonus -= 7;
+    } else { 
+        bonus -= 8;
+    }
+    score *= bonus;
+    mainText.content = 'Score: ' + score + '\n';
+    mainText.content += 'Time: ' + endTime + '\n';
+
+    mainText.visible = true;
+}
+
+function calcScore(sprite) {
+    score += sprite.points; 
 }
 
 function create() {
@@ -179,6 +206,7 @@ function create() {
     //var bear2 = holdables.create(100, )
     bear2 = holdables.create(270, 1360, 'bear2');
     bear2.body.setSize(8, 25, 0, 0);
+    bear2.points = 7;
     setUpSprite(bear2);
     addToGroup(bananas);
     addToGroup(honey);
@@ -186,6 +214,10 @@ function create() {
     // when player contacts another item
     // old item inserted in here
     discardedHoldables = game.add.group();
+
+    mainText = game.add.text(game.camera.x + 160, game.camera.y + 260, '', {fontSize: '16px', fill: '#fff' });
+    mainText.anchor.setTo(0.5, 0.5);
+    mainText.visible = false;
 
     exit = game.add.sprite(290, 0, 'exit');
 }
@@ -230,6 +262,8 @@ function update() {
         player.holding.body.x = player.body.x + 5;
         player.holding.body.y = player.body.y;
     }
+
+    // forEach (callback, context, true=childre that exist only)
     discardedHoldables.forEach(checkVelocity, this, true);
 
     // debug, find velocity for various height falls
