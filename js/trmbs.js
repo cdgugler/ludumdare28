@@ -1,5 +1,7 @@
 var game = new Phaser.Game(320,480, Phaser.AUTO, 'trmbs-game', {preload: preload, create: create, update: update, render: render });
 
+// warning, the code below may make your eyes bleed.
+
 function preload() {
     // what a mess, need an atlas
     game.load.image('hero', 'assets/img/hero.png');
@@ -30,7 +32,8 @@ var player,
     tempvel,
     holdables,
     discardedHoldables,
-    mainText;
+    endText,
+    introText;
 
 var LIFT_METER_HEIGHT = 75,
     PLAYER_MAX_VELOCITY = 2200;
@@ -99,9 +102,10 @@ function addToGroup(sprites) {
     for (var i = 0; i < sprites.loc.length; i++) {
         sprite = holdables.create(sprites.loc[i][0], sprites.loc[i][1], sprites.name);
         sprite.body.setSize(sprites.bodySize[0], sprites.bodySize[1], sprites.bodySize[2], sprites.bodySize[3]);
-        setUpSprite(sprite, 90);
+        setUpSprite(sprite, 20);
         sprite.attached = false; // if player is holding 
         sprite.points = sprites.points;
+        sprite.name = sprites.name;
     }
 }
 
@@ -114,7 +118,7 @@ function grabHoldable(player, holdable) {
         // go left on odd velocity
         valX = (valX % 2) == 0 ? valX : -valX;
         player.holding.body.velocity.x = valX;
-        player.holding.body.velocity.y = -1500;
+        player.holding.body.velocity.y = -800;
         holdables.remove(player.holding);
         discardedHoldables.add(player.holding);
         player.holding = false;
@@ -136,18 +140,35 @@ function checkVelocity(sprite) {
 
 // calc score and time, display
 function endGame() {
+    // convert to seconds and round two dec places
     var endTime = Math.round((game.time.now / 1000) * 100) / 100;
     holdables.forEach(calcScore, this, true);
+
     // add time bonus
     var bonus = 10;
-    if (endTime > 10 && endTime <= 20) {
+    if (endTime <= 15) {
         bonus -= 3;
-    } else if (endTime > 20 && endTime <= 30) {
+    } else if (endTime > 15 && endTime <= 20) {
         bonus -= 5;
-    } else if (endTime > 30 && endTime <= 40) {
+    } else if (endTime > 20 && endTime <= 25) {
         bonus -= 7;
     } else { 
         bonus -= 8;
+    }
+    
+    // player should exit holding something, or lose bonus
+    switch (player.holding.name) {
+        case 'bear':
+            bonus += 5;
+            break;
+        case 'banana':
+            bonus += 2;
+            break;
+        case 'honey':
+            bonus += 3;
+            break;
+        default:
+            bonus = 1;
     }
     score *= bonus;
     mainText.content = 'Score: ' + score + '\n';
@@ -168,10 +189,12 @@ function create() {
     tileset = game.add.tileset('tiles');
     // tileset.setCollisionRange(start tile index, end tile index, collides left?, right, up, down)
     tileset.setCollisionRange(0, tileset.total-1, true, true, true, true);
-
     layer = game.add.tilemapLayer(0, 0, 320, 480, tileset, map, 0);
+
     // make the world the same size as this layer
     layer.resizeWorld();
+
+    game.input.maxPointers = 1;
 
     // make a sprite using the hero graphic (x position, y position, image texture to use, atlas/spritesheet frame)
     player = game.add.sprite(160, 1400, 'hero')
@@ -190,7 +213,7 @@ function create() {
     // lower the gravity to make it more dramatic
     deadPlayerEmitter.gravity = 2;
 
-    spike = game.add.sprite(160, 1300, 'spike')
+    spike = game.add.sprite(260, 1300, 'spike')
     spike.body.allowGravity = false;
     spike.anchor.setTo(0.5, 0.5);
 
@@ -207,6 +230,7 @@ function create() {
     bear2 = holdables.create(270, 1360, 'bear2');
     bear2.body.setSize(8, 25, 0, 0);
     bear2.points = 7;
+    bear2.name = 'bear';
     setUpSprite(bear2);
     addToGroup(bananas);
     addToGroup(honey);
@@ -218,6 +242,7 @@ function create() {
     mainText = game.add.text(game.camera.x + 160, game.camera.y + 260, '', {fontSize: '16px', fill: '#fff' });
     mainText.anchor.setTo(0.5, 0.5);
     mainText.visible = false;
+
 
     exit = game.add.sprite(290, 0, 'exit');
 }
@@ -237,7 +262,8 @@ function update() {
     liftMeter.body.x = game.camera.x + 5;
     liftMeter.body.y = game.camera.y + 5;
 
-    if (game.input.activePointer.isDown) {
+    if (game.input.activePointer.isDown && game.input.activePointer.worldX > 0 && game.input.activePointer.worldX < 320) {
+        console.log(game.input.activePointer.worldX);
             spike.body.x = game.input.activePointer.worldX-8;
             spike.body.y = game.input.activePointer.worldY-8;
         if (!lifting && player.body.touching.down) {

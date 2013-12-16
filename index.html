@@ -9,8 +9,30 @@
     <script src="js/ready.js" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
+<div id="game-wrapper">
     <div id="trmbs-game"></div>
-    <noscript>Sorry, nothing to see here. Javascript Req'd.</noscript>
+    <div class="instructions">
+        <p>*Use Desktop Chrome for best performance*</p>
+        <p>You are Orange bear. You like bananas, honey, and purple
+        bear. You need to get to the exit, but you can't jump! Luckily, your friend Sharpy
+        can help pull you to the top, just be careful about getting too close. Grab your
+        favorite item (you only get one), and try to make it to the exit. You are
+        impulsive, so if you walk by another item you will toss your old item away.</p>
+    <p><strong>TLDR;</strong> Click on the screen and the Orange Bear will move towards
+        the sharp spiked sprite until the energy bar in the top left is gone.
+        Get the bear to the end as fast as possible for the highest score. Speed + least
+        mount of destroyed items will award the highest score. Exit while holding the purple
+        bear for an even higher score.
+    </p> 
+        <p><strong>About: </strong>Ugh, I'm tired. This is my first time participating in Ludum Dare. It's 
+            also my first experience making an HTML5 game. I used the
+            <a href="">Phaser</a> HTML5 game framework, stumbling through learning it
+            the entire time. The graphics are a little ugly, I didn't have time to replace the placeholder
+            graphics. I had tons of ideas to expand on the idea, but with only 48 hours I'm happy it
+            works at all! Find more from me here: <a href="http://www.addlime.com">Addlime</a></p>
+    </div>
+</div>
+    <noscript>Please enable javascript.</noscript>
     <script type="text/javascript" charset="utf-8">
         function hideCursor () { 
             document.getElementsByTagName('canvas')[0].style.cursor = "url('assets/img/target.png'), default";

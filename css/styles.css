@@ -1,6 +1,9 @@
+body {
+    background-color: #eee;
+}
 #trmbs-game canvas {
-    /*
-    margin: 0px auto;
-    padding: 0px;
-    */
+    margin: 0 auto;
+}
+.instructions p {
+    margin: 1em 10%;
 }
