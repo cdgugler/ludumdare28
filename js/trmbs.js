@@ -128,7 +128,7 @@ function grabHoldable(player, holdable) {
     }
     holdable.attached = true;
     player.holding = holdable;
-    pickupSound.play();
+    // if (!pickupSound.isPlaying) { pickupSound.play(); }
 }
 
 // blows up discarded holdables once they're on
