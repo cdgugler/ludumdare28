@@ -17,6 +17,8 @@ function preload() {
     game.load.image('banana', 'assets/img/banana.png');
     game.load.image('honey', 'assets/img/honey.png');
     game.load.image('exit', 'assets/img/exit.png');
+    game.load.audio('explosion', ['assets/audio/explosion.mp3', 'assets/audio/explosion.ogg']);
+    game.load.audio('pickup', ['assets/audio/pickup.mp3', 'assets/audio/pickup.ogg']);
     game.load.tilemap('level01', 'assets/maps/level01.json', null, Phaser.Tilemap.TILED_JSON);
     game.load.tileset('tiles', 'assets/img/tiles01.png', 16, 16);
 }
@@ -73,6 +75,7 @@ function playerCollidesWithSpike() {
     spike.body.velocity.y = 0;
     // start the emitter, (all at once?, how long each particle lasts, how often to emit, num particles)
     deadPlayerEmitter.start(true, 5000, null, 15);
+    explosionSound.play();
 }
 
 function playerCollidesWithLayer() {
@@ -125,6 +128,7 @@ function grabHoldable(player, holdable) {
     }
     holdable.attached = true;
     player.holding = holdable;
+    pickupSound.play();
 }
 
 // blows up discarded holdables once they're on
@@ -135,6 +139,7 @@ function checkVelocity(sprite) {
         deadPlayerEmitter.y = sprite.body.y;
         deadPlayerEmitter.start(true, 3000, null, 10);
         sprite.kill();
+        explosionSound.play();
     }
 }
 
@@ -243,6 +248,8 @@ function create() {
     mainText.anchor.setTo(0.5, 0.5);
     mainText.visible = false;
 
+    explosionSound = game.add.audio('explosion', 0.7);
+    pickupSound = game.add.audio('pickup', 0.3);
 
     exit = game.add.sprite(290, 0, 'exit');
 }
