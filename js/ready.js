@@ -1,4 +1,4 @@
-// document ready without js
+// document ready without jQuery
 // http://stackoverflow.com/questions/799981/document-ready-equivalent-without-jquery?lq=1
 var ready = (function(){    
 

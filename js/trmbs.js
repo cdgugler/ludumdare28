@@ -1,7 +1,5 @@
 var game = new Phaser.Game(320,480, Phaser.AUTO, 'trmbs-game', {preload: preload, create: create, update: update, render: render });
 
-// warning, the code below may make your eyes bleed.
-
 function preload() {
     // what a mess, need an atlas
     game.load.image('hero', 'assets/img/hero.png');
@@ -14,7 +12,6 @@ function preload() {
     game.load.image('leg', 'assets/img/leg.png');
     game.load.image('liftMeter', 'assets/img/jumpMeter.png');
     game.load.image('bear2', 'assets/img/bear2.png');
-    game.load.image('banana', 'assets/img/banana.png');
     game.load.image('honey', 'assets/img/honey.png');
     game.load.image('exit', 'assets/img/exit.png');
     game.load.audio('explosion', ['assets/audio/explosion.mp3', 'assets/audio/explosion.ogg']);
@@ -34,25 +31,14 @@ var player,
     tempvel,
     holdables,
     discardedHoldables,
+    breakables,
     endText,
     introText;
 
 var LIFT_METER_HEIGHT = 75,
     PLAYER_MAX_VELOCITY = 2200;
 
-// bodySize and locations to place all bananas
-var bananas = {
-    bodySize: [25, 10, 0, 5],
-    loc: [
-        [68, 1287],
-        [50, 1120],
-        [210, 1000],
-        [110, 890],
-        [28, 618],
-        [220, 550]],
-    name: 'banana',
-    points: 3
-};
+// bodySize and locations to place honey jars
 var honey = {
     bodySize: [16, 22, 1, 1],
     loc: [
@@ -61,7 +47,13 @@ var honey = {
         [200, 438],
         [60, 390],
         [48, 150],
-        [260, 22]],
+        [260, 22],
+        [68, 1287],
+        [50, 1120],
+        [210, 1000],
+        [110, 890],
+        [28, 618],
+        [220, 550]],
     name: 'honey',
     points: 5
 };
@@ -100,10 +92,10 @@ function setUpSprite(sprite, grav) {
 }
 
 // this takes a sprite name, body size, and a list of locations to
-// to place multiple sprites in the world and add to the holdables group
-function addToGroup(sprites) {
+// to place multiple sprites in the world and add to the given group
+function addToGroup(sprites, group) {
     for (var i = 0; i < sprites.loc.length; i++) {
-        sprite = holdables.create(sprites.loc[i][0], sprites.loc[i][1], sprites.name);
+        sprite = group.create(sprites.loc[i][0], sprites.loc[i][1], sprites.name);
         sprite.body.setSize(sprites.bodySize[0], sprites.bodySize[1], sprites.bodySize[2], sprites.bodySize[3]);
         setUpSprite(sprite, 20);
         sprite.attached = false; // if player is holding 
@@ -116,19 +108,33 @@ function grabHoldable(player, holdable) {
     // if player is already holding something
     // and collision holdable is not attached
     if (player.holding && !holdable.attached) {
-        // launch it outta here
-        var valX = Math.floor(Math.random() * 600 + 300);
-        // go left on odd velocity
-        valX = (valX % 2) == 0 ? valX : -valX;
-        player.holding.body.velocity.x = valX;
-        player.holding.body.velocity.y = -800;
-        holdables.remove(player.holding);
-        discardedHoldables.add(player.holding);
-        player.holding = false;
+    //     // launch it outta here
+    //     var valX = Math.floor(Math.random() * 600 + 300);
+    //     // go left on odd velocity
+    //     valX = (valX % 2) == 0 ? valX : -valX;
+    //     player.holding.body.velocity.x = valX;
+    //     player.holding.body.velocity.y = -800;
+    //     holdables.remove(player.holding);
+    //     discardedHoldables.add(player.holding);
+    //     player.holding = false;
+        return;
     }
     holdable.attached = true;
     player.holding = holdable;
     // if (!pickupSound.isPlaying) { pickupSound.play(); }
+}
+
+function collideBreakable (player, breakable) {
+        var valX = Math.floor(Math.random() * 600 + 300);
+        // go left on odd velocity
+        valX = (valX % 2) == 0 ? valX : -valX;
+        console.log(breakable.body.velocity.y);
+        breakable.body.y -= 50;
+        breakable.body.gravity.y = 100;
+        breakable.body.velocity.x = valX;
+        breakable.body.velocity.y = -800;
+        breakables.remove(breakable);
+        discardedHoldables.add(breakable);
 }
 
 // blows up discarded holdables once they're on
@@ -165,9 +171,6 @@ function endGame() {
     switch (player.holding.name) {
         case 'bear':
             bonus += 5;
-            break;
-        case 'banana':
-            bonus += 2;
             break;
         case 'honey':
             bonus += 3;
@@ -231,14 +234,14 @@ function create() {
     // sprites for player to pick up
     // there's probably a better way to do this but time is ticking
     holdables = game.add.group();
+    breakables = game.add.group();
     //var bear2 = holdables.create(100, )
     bear2 = holdables.create(270, 1360, 'bear2');
     bear2.body.setSize(8, 25, 0, 0);
     bear2.points = 7;
     bear2.name = 'bear';
     setUpSprite(bear2);
-    addToGroup(bananas);
-    addToGroup(honey);
+    addToGroup(honey, breakables);
 
     // when player contacts another item
     // old item inserted in here
@@ -261,16 +264,18 @@ function update() {
     // if using processCallback it must return true for collideCallback to run
     game.physics.collide(player, spike, playerCollidesWithSpike, null, this);
     game.physics.collide(player, holdables, grabHoldable);
+    game.physics.collide(player, breakables, collideBreakable);
     game.physics.collide(player, layer, playerCollidesWithLayer);
     game.physics.collide(player, exit, endGame);
     // game.physics.collide(spike, layer);
+    game.physics.collide(breakables, layer, collidesWithLayer, null, this);
     game.physics.collide(holdables, layer, collidesWithLayer, null, this);
     game.physics.collide(deadPlayerEmitter, layer);
     liftMeter.body.x = game.camera.x + 5;
     liftMeter.body.y = game.camera.y + 5;
 
     if (game.input.activePointer.isDown && game.input.activePointer.worldX > 0 && game.input.activePointer.worldX < 320) {
-        console.log(game.input.activePointer.worldX);
+        // console.log(game.input.activePointer.worldX);
             spike.body.x = game.input.activePointer.worldX-8;
             spike.body.y = game.input.activePointer.worldY-8;
         if (!lifting && player.body.touching.down) {
