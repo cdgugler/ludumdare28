@@ -42,18 +42,18 @@ var LIFT_METER_HEIGHT = 75,
 var honey = {
     bodySize: [16, 22, 1, 1],
     loc: [
-        [225, 1210],
-        [120, 709],
-        [200, 438],
-        [60, 390],
-        [48, 150],
-        [260, 22],
-        [68, 1287],
-        [50, 1120],
-        [210, 1000],
-        [110, 890],
-        [28, 618],
-        [220, 550]],
+        [18, 14],
+        [3, 20],
+        [15, 29],
+        [6, 35],
+        [13, 38],
+        [12, 45],
+        [2, 49],
+        [5, 53],
+        [15, 62],
+        [6, 66],
+        [10, 73],
+        [16, 87]],
     name: 'honey',
     points: 5
 };
@@ -95,7 +95,7 @@ function setUpSprite(sprite, grav) {
 // to place multiple sprites in the world and add to the given group
 function addToGroup(sprites, group) {
     for (var i = 0; i < sprites.loc.length; i++) {
-        sprite = group.create(sprites.loc[i][0], sprites.loc[i][1], sprites.name);
+        sprite = group.create(sprites.loc[i][0]*16, sprites.loc[i][1]*16-5, sprites.name);
         sprite.body.setSize(sprites.bodySize[0], sprites.bodySize[1], sprites.bodySize[2], sprites.bodySize[3]);
         setUpSprite(sprite, 20);
         sprite.attached = false; // if player is holding 
@@ -128,7 +128,6 @@ function collideBreakable (player, breakable) {
         var valX = Math.floor(Math.random() * 600 + 300);
         // go left on odd velocity
         valX = (valX % 2) == 0 ? valX : -valX;
-        console.log(breakable.body.velocity.y);
         breakable.body.y -= 50;
         breakable.body.gravity.y = 100;
         breakable.body.velocity.x = valX;
@@ -154,6 +153,7 @@ function endGame() {
     // convert to seconds and round two dec places
     var endTime = Math.round((game.time.now / 1000) * 100) / 100;
     holdables.forEach(calcScore, this, true);
+    breakables.forEach(calcScore, this, true);
 
     // add time bonus
     var bonus = 10;
@@ -183,6 +183,13 @@ function endGame() {
     mainText.content += 'Time: ' + endTime + '\n';
 
     mainText.visible = true;
+    playerCollidesWithSpike();
+
+    // game.add.button(game.world.centerX, 0, 'liftMeter', restartGame, this, 2, 1, 0);
+}
+
+function restartGame() {
+    // create();
 }
 
 function calcScore(sprite) {
@@ -236,7 +243,8 @@ function create() {
     holdables = game.add.group();
     breakables = game.add.group();
     //var bear2 = holdables.create(100, )
-    bear2 = holdables.create(270, 1360, 'bear2');
+    // multiply x and y by tile size, minus 10 height
+    bear2 = holdables.create(17*16, 95*16-10, 'bear2');
     bear2.body.setSize(8, 25, 0, 0);
     bear2.points = 7;
     bear2.name = 'bear';
@@ -254,7 +262,7 @@ function create() {
     explosionSound = game.add.audio('explosion', 0.7);
     pickupSound = game.add.audio('pickup', 0.3);
 
-    exit = game.add.sprite(290, 0, 'exit');
+    exit = game.add.sprite(5*16, 5*16, 'exit');
 }
 
 function update() {
@@ -266,7 +274,7 @@ function update() {
     game.physics.collide(player, holdables, grabHoldable);
     game.physics.collide(player, breakables, collideBreakable);
     game.physics.collide(player, layer, playerCollidesWithLayer);
-    game.physics.collide(player, exit, endGame);
+    game.physics.overlap(player, exit, endGame);
     // game.physics.collide(spike, layer);
     game.physics.collide(breakables, layer, collidesWithLayer, null, this);
     game.physics.collide(holdables, layer, collidesWithLayer, null, this);

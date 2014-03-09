@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="20" height="90" tilewidth="16" tileheight="16">
+<map version="1.0" orientation="orthogonal" width="20" height="100" tilewidth="16" tileheight="16">
  <tileset firstgid="1" name="tiles01" tilewidth="16" tileheight="16">
-  <image source="../../../../../../run/user/athens/gvfs/smb-share:server=addlimedev,share=www/ld28.dev/htdocs/assets/img/tiles01.png" width="64" height="64"/>
+  <image source="../img/tiles01.png" width="64" height="64"/>
  </tileset>
- <layer name="Tile Layer 2" width="20" height="90">
+ <layer name="Tile Layer 2" width="20" height="100">
   <data encoding="base64" compression="zlib">
-   eJzt2FsKgCAQBVB77H/NEf2JYyESTZwDdwNyZ0RLIbutCt+2BoE/0/ucliC4e3nOHLXVM2SOgDutvWF3XPYgMCLqk04xg38BTnrwDu/Qvqxn07unR3IAQncA/w==
+   eJzt10EKACAIRNGK7n/mCFoFExESiv/B7EMtrBTAl7aC3KxnoG2BT3ufovQrwhnhV9S5z46+adQEt6pIdrwttqghMmAv0boI8ELdNe4bLDBXmJiDP6jzWdQ/utr7XjMAIvsA9Q==
   </data>
  </layer>
 </map>
