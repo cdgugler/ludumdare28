@@ -11,6 +11,7 @@ function preload() {
     game.load.image('head', 'assets/img/head.png');
     game.load.image('leg', 'assets/img/leg.png');
     game.load.image('liftMeter', 'assets/img/jumpMeter.png');
+    game.load.image('restartBtn', 'assets/img/restartBtn.png');
     game.load.image('bear2', 'assets/img/bear2.png');
     game.load.image('honey', 'assets/img/honey.png');
     game.load.image('exit', 'assets/img/exit.png');
@@ -18,6 +19,7 @@ function preload() {
     game.load.audio('pickup', ['assets/audio/pickup.mp3', 'assets/audio/pickup.ogg']);
     game.load.tilemap('level01', 'assets/maps/level01.json', null, Phaser.Tilemap.TILED_JSON);
     game.load.tileset('tiles', 'assets/img/tiles01.png', 16, 16);
+    game.canvas.style.cursor = 'inherit';
 }
 
 var player,
@@ -33,7 +35,10 @@ var player,
     discardedHoldables,
     breakables,
     endText,
-    introText;
+    introText,
+    mainText,
+    elapsedTime = 0,
+    restartBtn;
 
 var LIFT_METER_HEIGHT = 75,
     PLAYER_MAX_VELOCITY = 2200;
@@ -68,6 +73,7 @@ function playerCollidesWithSpike() {
     // start the emitter, (all at once?, how long each particle lasts, how often to emit, num particles)
     deadPlayerEmitter.start(true, 5000, null, 15);
     explosionSound.play();
+    restartBtn = game.add.button(game.camera.x + 130, game.camera.y + 300, 'restartBtn', restartGame, this, 2, 1, 0);
 }
 
 function playerCollidesWithLayer() {
@@ -150,10 +156,13 @@ function checkVelocity(sprite) {
 
 // calc score and time, display
 function endGame() {
+    var timePassed = game.time.now - elapsedTime;
     // convert to seconds and round two dec places
-    var endTime = Math.round((game.time.now / 1000) * 100) / 100;
+    var endTime = Math.round((timePassed / 1000) * 100) / 100;
     holdables.forEach(calcScore, this, true);
     breakables.forEach(calcScore, this, true);
+    console.log("Exit Hit");
+    console.log(endTime);
 
     // add time bonus
     var bonus = 10;
@@ -166,6 +175,7 @@ function endGame() {
     } else { 
         bonus -= 8;
     }
+    console.log(bonus);
     
     // player should exit holding something, or lose bonus
     switch (player.holding.name) {
@@ -177,7 +187,10 @@ function endGame() {
             break;
         default:
             bonus = 1;
+            break;
     }
+    console.log(score);
+    console.log(bonus);
     score *= bonus;
     mainText.content = 'Score: ' + score + '\n';
     mainText.content += 'Time: ' + endTime + '\n';
@@ -185,11 +198,21 @@ function endGame() {
     mainText.visible = true;
     playerCollidesWithSpike();
 
-    // game.add.button(game.world.centerX, 0, 'liftMeter', restartGame, this, 2, 1, 0);
 }
 
 function restartGame() {
-    // create();
+    holdables.destroy();
+    liftMeter.destroy();
+    breakables.destroy();
+    bear2.destroy();
+    spike.destroy();
+    player.destroy();
+    restartBtn.destroy();
+    mainText.content = '';
+    mainText.visible = false;
+    score = 0;
+    elapsedTime = game.time.now;
+    create();
 }
 
 function calcScore(sprite) {
@@ -274,7 +297,6 @@ function update() {
     game.physics.collide(player, holdables, grabHoldable);
     game.physics.collide(player, breakables, collideBreakable);
     game.physics.collide(player, layer, playerCollidesWithLayer);
-    game.physics.overlap(player, exit, endGame);
     // game.physics.collide(spike, layer);
     game.physics.collide(breakables, layer, collidesWithLayer, null, this);
     game.physics.collide(holdables, layer, collidesWithLayer, null, this);
@@ -283,7 +305,6 @@ function update() {
     liftMeter.body.y = game.camera.y + 5;
 
     if (game.input.activePointer.isDown && game.input.activePointer.worldX > 0 && game.input.activePointer.worldX < 320) {
-        // console.log(game.input.activePointer.worldX);
             spike.body.x = game.input.activePointer.worldX-8;
             spike.body.y = game.input.activePointer.worldY-8;
         if (!lifting && player.body.touching.down) {
@@ -315,8 +336,8 @@ function update() {
     // debug, find velocity for various height falls
     // if (player.body.velocity.y > tempvel) {
     //     tempvel = player.body.velocity.y;
-    //     console.log(tempvel);
     // }
+    game.physics.overlap(player, exit, endGame);
 }
 function render() {
     // game.debug.renderSpriteInfo(player, 32, 32);

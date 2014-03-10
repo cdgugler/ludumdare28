@@ -1,6 +1,9 @@
 body {
     background-color: #eee;
 }
+#trmbs-game {
+    cursor: url('/assets/img/target.png'), default;
+}
 #trmbs-game canvas {
     margin: 0 auto;
 }
